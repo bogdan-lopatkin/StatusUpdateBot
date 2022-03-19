@@ -13,8 +13,8 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
 {
     public class MessageHandler : IUpdateHandler
     {
-        private const string LastActivityDateTimeFormat = "dd/M/yyyy HH:mm";
-        private const string LastStatusUpdateDateTimeFormat = "dd/M/yyyy";
+        private const string LastActivityDateTimeFormat = "dd/MM/yyyy HH:mm";
+        private const string LastStatusUpdateDateTimeFormat = "dd/MM/yyyy HH:mm";
 
         private readonly TelegramBotClient _botClient;
         private readonly ISpreadSheet _spreadSheet;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.Extensions.Configuration;
 using StatusUpdateBot.Bots;
 using StatusUpdateBot.Bots.Telegram;
@@ -13,6 +14,7 @@ namespace StatusUpdateBot
         private static void Main()
         {
             Configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", false, true)
                 .Build();
 
