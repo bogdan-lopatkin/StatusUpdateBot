@@ -1,10 +1,13 @@
-﻿namespace StatusUpdateBot.SpreadSheets
+﻿using EnumStringValues;
+
+namespace StatusUpdateBot.SpreadSheets
 {
     public enum Sheets
     {
         Status,
         Preferences,
-        Settings
+        Settings,
+        Translations
     }
 
     public enum UserStatusSheetCells
@@ -13,7 +16,8 @@
         Username,
         Name,
         LastActivity,
-        LastStatusUpdate
+        LastStatusUpdate,
+        Comment
     }
 
     public enum UserPreferencesSheetCells
@@ -21,7 +25,8 @@
         Id,
         ChatId,
         GroupId,
-        NotificationMode
+        NotificationMode,
+        Language
     }
 
     public enum SettingsSheetCells
@@ -29,5 +34,21 @@
         Id,
         Description,
         Value
+    }
+
+    public enum DateCellFormats
+    {
+        [StringValue("dd/M/yyyy")]
+        Date,
+        
+        [StringValue("dd/M/yyyy HH:mm")]
+        DateTime
+    }
+    
+    public enum TranslationsSheetCells
+    {
+        Key,
+        Ua,
+        Ru,
     }
 }

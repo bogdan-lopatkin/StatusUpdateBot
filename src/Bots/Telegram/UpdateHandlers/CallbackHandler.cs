@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using EnumStringValues;
+using StatusUpdateBot.Bots.Telegram.NotificationHandlers;
+using StatusUpdateBot.Bots.Telegram.UpdateHandlers.Utils;
 using StatusUpdateBot.SpreadSheets;
+using StatusUpdateBot.Translators;
+using StatusUpdateBot.Utils;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
 {
@@ -63,7 +68,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
 
         protected void UpdateNotificationPreference(Update update)
         {
-            var type = update.CallbackQuery.Data.Split(".")[(int) CallbackStructure.Value];
+            var type = update.CallbackQuery!.Data!.Split(".")[(int) CallbackStructure.Value];
 
             var notificationPreference = (NotificationPreferences) Enum.Parse(
                 typeof(NotificationPreferences),
@@ -81,9 +86,48 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 }
             );
 
-            _botClient.SendTextMessageAsync(
+            UpdateHandlerUtils.MarkSelectedNotificationModeButton(update.CallbackQuery!.Message!.ReplyMarkup, type);
+
+            _botClient.EditMessageTextAsync(
                 update.CallbackQuery.Message.Chat.Id,
-                notificationPreference.GetStringValue()
+                update.CallbackQuery.Message.MessageId,
+                new StringFormatter(Translator.Translate("SelectNotificationMode"))
+                    .Add("@currentMode", Translator.Translate(notificationPreference.GetStringValue()))
+                    .ToString(),
+                replyMarkup: update.CallbackQuery.Message.ReplyMarkup
+            );
+        }
+        
+        protected void UpdateLanguagePreference(Update update)
+        {
+            var language = update.CallbackQuery!.Data!.Split(".")[(int) CallbackStructure.Value];
+
+            _spreadSheet.FindAndUpdateRow(
+                Sheets.Preferences.GetStringValue(),
+                update.CallbackQuery.From.Id.ToString(),
+                (int) UserPreferencesSheetCells.Id,
+                new Dictionary<int, string>
+                {
+                    {(int) UserPreferencesSheetCells.Language, language}
+                }
+            );
+
+            var keyboardRows = update.CallbackQuery!.Message!.ReplyMarkup!.InlineKeyboard;
+
+            foreach (var keyboardRow in keyboardRows)
+                foreach (var button in keyboardRow)
+                {
+                    button.Text = button.Text.Replace(" ✅", null);
+                    
+                    if (button.Text.Contains(language))
+                        button.Text += " ✅";
+                }   
+            
+            _botClient.EditMessageTextAsync(
+                update.CallbackQuery.Message.Chat.Id,
+                update.CallbackQuery.Message.MessageId,
+                Translator.Translate("SelectLanguage", language),
+                replyMarkup: new InlineKeyboardMarkup(keyboardRows)
             );
         }
     }
@@ -98,6 +142,8 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
     internal enum CallBackHandlerUpdateProcessingMethods
     {
         [StringValue("UpdateNotificationPreference")]
-        NotificationPreference
+        NotificationPreference,
+        [StringValue("UpdateLanguagePreference")]
+        Language
     }
 }

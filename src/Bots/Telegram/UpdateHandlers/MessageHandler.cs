@@ -2,24 +2,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using EnumStringValues;
+using NickBuhro.Translit;
+using StatusUpdateBot.Bots.Telegram.NotificationHandlers;
 using StatusUpdateBot.Bots.Telegram.UpdateHandlers.Utils;
 using StatusUpdateBot.SpreadSheets;
+using StatusUpdateBot.Utils;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
+using static StatusUpdateBot.Translators.Translator;
 
 namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
 {
     public class MessageHandler : IUpdateHandler
     {
-        private const string LastActivityDateTimeFormat = "dd/M/yyyy HH:mm";
-        private const string LastStatusUpdateDateTimeFormat = "dd/M/yyyy";
-
         private readonly TelegramBotClient _botClient;
         private readonly ISpreadSheet _spreadSheet;
         private IList<object> _userPreferences;
-
 
         public MessageHandler(TelegramBotClient botClient, ISpreadSheet spreadSheet)
         {
@@ -29,8 +28,10 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
 
         public bool IsApplicable(Update update)
         {
-            return update.Message != null && update.Type == UpdateType.Message &&
-                   update.Message.Type == MessageType.Text;
+            return update.Message?.Text != null
+                   && update.Type == UpdateType.Message
+                   && update.Message.Type == MessageType.Text
+                   && !update.Message.Text.StartsWith("/");
         }
 
         public void HandleUpdate(Update update)
@@ -38,11 +39,17 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             if (update?.Message?.Text == null)
                 return;
 
-            if (update.Message is {Text: "Изменить режим получения напоминаний"})
+            FindUserPreferences(update.Message.From);
+            if (SpreadSheetUtils.IsRowHasCell(_userPreferences, UserPreferencesSheetCells.Language, out var language))
+                SetDefaultTargetLanguage(language);
+            
+            if (update.Message is {Text: "/changenotificationmode"})
             {
-                SendNotificationsPreferenceInlineKeyboardMessage(
+                UpdateHandlerUtils.SendNotificationsPreferenceInlineKeyboardMessage(
+                    _botClient,
                     update.Message.Chat.Id,
-                    "Выберите новый режим получения напоминаний"
+                    Translate("SelectNotificationMode"),
+                    SpreadSheetUtils.TryGetCell(_userPreferences, UserPreferencesSheetCells.NotificationMode)
                 );
 
                 return;
@@ -54,7 +61,6 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             _spreadSheet.LoadCache(new[]
                 {
                     Sheets.Settings.GetStringValue(),
-                    Sheets.Preferences.GetStringValue()
                 }
             );
 
@@ -67,8 +73,6 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                     ExpandStatusDataWithNewStatus(statusData, update.Message.Text);
 
                 UpdateUserStatus(statusData, update.Message.From);
-
-                FindUserPreferences(update.Message.From);
                 UpdateUserChat(update.Message.From, update.Message.Chat);
 
                 updateSuccessful = true;
@@ -98,15 +102,19 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             {
                 {(int) UserStatusSheetCells.Id, user.Id.ToString()},
                 {(int) UserStatusSheetCells.Username, user.Username},
-                {(int) UserStatusSheetCells.Name, user.FirstName + " " + user.LastName},
-                {(int) UserStatusSheetCells.LastActivity, DateTime.Now.ToString(LastActivityDateTimeFormat)}
+                {(int) UserStatusSheetCells.Name, Transliteration.CyrillicToLatin(user.FirstName + " " + user.LastName)},
+                {(int) UserStatusSheetCells.LastActivity, DateTime.Now.ToString(DateCellFormats.DateTime.GetStringValue())}
             };
         }
 
         private void ExpandStatusDataWithNewStatus(IDictionary<int, string> userStatusData, string text)
         {
             userStatusData[(int) UserStatusSheetCells.LastStatusUpdate] =
-                DateTime.Now.ToString(LastStatusUpdateDateTimeFormat);
+                DateTime.Now.ToString(DateTime.Now.ToString(DateCellFormats.DateTime.GetStringValue()));
+            userStatusData[(int) UserStatusSheetCells.Comment] = text;
+
+            if (Program.Translator != null)
+                text = Program.Translator.Translate(text, "en");
 
             var fixedUserStatusCellsCount = Enum.GetNames(typeof(UserStatusSheetCells)).Length - 1;
             foreach (var entry in MessageHandlerUtils.StatusMessageToArray(text))
@@ -152,38 +160,34 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 AcknowledgeStatusUpdateInPrivateChat(chat, user, isUpdateSuccessful);
 
             if (SpreadSheetUtils.IsRowHasCell(_userPreferences, UserPreferencesSheetCells.GroupId))
-                AcknowledgeStatusUpdateInGroup(chat, user, isUpdateSuccessful);
+                AcknowledgeStatusUpdateInGroup(user, isUpdateSuccessful);
         }
 
         private void AcknowledgeStatusUpdateInPrivateChat(Chat chat, User user, bool isUpdateSuccessful)
         {
             var userHasPreferredNotificationMode = IsUserHasPreferredNotificationMode(user);
-
-            ReplyKeyboardMarkup replyKeyboardMarkup =
-                new(new[] {new KeyboardButton[] {"Изменить режим получения напоминаний"}})
-                {
-                    ResizeKeyboard = true
-                };
-
+            
             if (!int.TryParse(SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NextNotificationAt),
                     out var interval))
                 interval = 3;
 
             _botClient.SendTextMessageAsync(chat.Id,
                 isUpdateSuccessful
-                    ? $"Статус был обновлен✅. Следующее обновление статуса - {DateTime.Now.AddDays(interval):dd/M/yyyy}."
-                    : "Произошла ошибка, обновленный статус будет обработан вручную позже",
-                replyMarkup: userHasPreferredNotificationMode ? replyKeyboardMarkup : null
+                    ? new StringFormatter(Translate("StatusUpdateSuccess"))
+                        .Add("@date",DateTime.Now.AddDays(interval).ToString(DateCellFormats.Date.GetStringValue()))
+                        .ToString()
+                    : Translate("StatusUpdateError")
             );
 
             if (!userHasPreferredNotificationMode)
-                SendNotificationsPreferenceInlineKeyboardMessage(
+                UpdateHandlerUtils.SendNotificationsPreferenceInlineKeyboardMessage(
+                    _botClient,
                     chat.Id,
-                    "Похоже у Вас не выбран предпочтительный режим получения напоминаний. Пожалуйста, выберите его сейчас. По умолчанию напоминания приходят в группу."
+                    Translate("NotificationModeNotSelected")
                 );
         }
 
-        private void AcknowledgeStatusUpdateInGroup(Chat chat, User user, bool isUpdateSuccessful)
+        private void AcknowledgeStatusUpdateInGroup(User user, bool isUpdateSuccessful)
         {
             var messageText = SpreadSheetUtils.GetSetting(_spreadSheet, Settings.LastPinnedMessageText);
             var messageId = SpreadSheetUtils.GetSetting(_spreadSheet, Settings.LastPinnedMessageId);
@@ -215,36 +219,6 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             {
                 // ignored
             }
-        }
-
-        private void SendNotificationsPreferenceInlineKeyboardMessage(long chatId, string text)
-        {
-            InlineKeyboardMarkup inlineKeyboard = new(
-                new[]
-                {
-                    new[]
-                    {
-                        InlineKeyboardButton.WithCallbackData("Получать напоминания в ЛС",
-                            "callback.notificationPreference.private")
-                    },
-                    new[]
-                    {
-                        InlineKeyboardButton.WithCallbackData("Получать напоминания в группе",
-                            "callback.notificationPreference.group")
-                    },
-                    new[]
-                    {
-                        InlineKeyboardButton.WithCallbackData("Не получать напоминания",
-                            "callback.notificationPreference.none")
-                    }
-                }
-            );
-
-            _botClient.SendTextMessageAsync(
-                chatId,
-                text,
-                replyMarkup: inlineKeyboard
-            );
         }
 
         private bool IsUserHasPreferredNotificationMode(User user)

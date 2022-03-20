@@ -112,7 +112,7 @@ namespace StatusUpdateBot.Bots.Telegram
             updateHandlerClasses.Remove(interfaceType);
 
             return updateHandlerClasses.Select(notificationHandlerClass =>
-                    (INotificationHandler) Activator.CreateInstance(notificationHandlerClass, _botClient, _spreadSheet))
+                    (INotificationHandler) Activator.CreateInstance(notificationHandlerClass, _botClient, _spreadSheet.Clone()))
                 .ToList();
         }
     }

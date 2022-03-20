@@ -17,6 +17,11 @@ namespace StatusUpdateBot.SpreadSheets.Google
         private readonly string _spreadSheetId;
         private bool _isBatchUpdatesEnabled;
 
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
         public GoogleSpreadSheets(string spreadSheetId, string configurationPath = "token.json")
         {
             _spreadSheetId = spreadSheetId;

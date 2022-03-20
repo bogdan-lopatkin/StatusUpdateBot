@@ -31,7 +31,31 @@ namespace StatusUpdateBot.SpreadSheets
 
         public static bool IsRowHasCell(IList<object> row, Enum cell)
         {
-            return row != null && row.Count > (int) (object) cell && row[(int) (object) cell].ToString() != "";
+            return IsRowHasCell(row, (int) (object) cell);
+        }
+        
+        public static bool IsRowHasCell(IList<object> row, Enum cell, out string value)
+        {
+            return IsRowHasCell(row, (int) (object) cell, out value);
+        }
+        
+        public static bool IsRowHasCell(IList<object> row, int cell)
+        {
+            return IsRowHasCell(row, cell, out _);
+        }
+        
+        public static bool IsRowHasCell(IList<object> row, int cell, out string value)
+        {
+            var isRowHasCell = row != null && row.Count > cell && row[cell].ToString() != "";
+            
+            value = isRowHasCell ? row[cell].ToString() : null;
+
+            return isRowHasCell;
+        }
+        
+        public static string TryGetCell(IList<object> row, Enum cell, string fallback = null)
+        {
+            return IsRowHasCell(row, cell, out var value) ? value : fallback;
         }
     }
 }

@@ -1,17 +1,20 @@
 ﻿using EnumStringValues;
 
-namespace StatusUpdateBot.Bots.Telegram
+namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 {
     public enum NotificationPreferences
     {
-        [StringValue("Готово! Напоминания об обновлении статуса отключены")]
+        [StringValue("NotificationModeNone")]
         None,
 
-        [StringValue("Готово! Последующие напоминания об обновлении статуса будут приходить в группу")]
+        [StringValue("NotificationModeGroup")]
         Group,
 
-        [StringValue("Готово! Последующие напоминания об обновлении статуса будут приходить в ЛС")]
-        Private
+        [StringValue("NotificationModePrivate")]
+        Private,
+        
+        [StringValue("NotificationModeNotSet")]
+        NotSet,
     }
 
     public enum Settings
@@ -19,8 +22,8 @@ namespace StatusUpdateBot.Bots.Telegram
         NotifyAfter,
         NotifyAt,
         NextNotificationAt,
-        NotificationText,
         LastPinnedMessageText,
-        LastPinnedMessageId
+        LastPinnedMessageId,
+        LanguageInGroup
     }
 }

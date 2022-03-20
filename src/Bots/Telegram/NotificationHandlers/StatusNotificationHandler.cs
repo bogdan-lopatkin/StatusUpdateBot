@@ -4,13 +4,13 @@ using System.Linq;
 using EnumStringValues;
 using StatusUpdateBot.Bots.Telegram.NotificationHandlers.Utils;
 using StatusUpdateBot.SpreadSheets;
+using StatusUpdateBot.Translators;
 using Telegram.Bot;
 
 namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 {
     public class StatusNotificationHandler : INotificationHandler
     {
-        private const string DefaultUserNotificationText = "Пожалуйста, обновите статус";
         private readonly TelegramBotClient _botClient;
 
         private readonly ISpreadSheet _spreadSheet;
@@ -54,7 +54,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
             SpreadSheetUtils.SetSetting(
                 _spreadSheet,
                 Settings.NextNotificationAt,
-                DateTime.Now.AddDays(_notificationInterval).ToString("dd/M/yyyy")
+                DateTime.Now.AddDays(_notificationInterval).ToString(DateCellFormats.Date.GetStringValue())
             );
 
             _spreadSheet.ExecuteBatchUpdate();
@@ -72,7 +72,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
             return !NotificationUtils.IsDateValid(
                 userStatus[(int) UserStatusSheetCells.LastStatusUpdate].ToString(),
                 out var parsedDate,
-                "dd/M/yyyy"
+                DateCellFormats.Date.ToString()
             ) || parsedDate.AddDays(_notificationInterval) < DateTime.Now;
         }
 
@@ -119,8 +119,8 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 
             foreach (var entry in usersDataGroupedByGroupId)
             {
-                var message = SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NotificationText,
-                    DefaultUserNotificationText);
+                var message = Translator.Translate("NotificationText",
+                    SpreadSheetUtils.GetSetting(_spreadSheet, Settings.LanguageInGroup));
                 var userList = CreateUserList(entry.Value);
 
                 var sentMessage = _botClient.SendTextMessageAsync(
@@ -136,9 +136,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
                         int.Parse(SpreadSheetUtils.GetSetting(_spreadSheet, Settings.LastPinnedMessageId))
                     );
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) {}
 
                 _botClient.PinChatMessageAsync(entry.Key, sentMessage.Result.MessageId);
                 SpreadSheetUtils.SetSetting(_spreadSheet, Settings.LastPinnedMessageText, sentMessage.Result.Text);
@@ -156,7 +154,8 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 
                 _botClient.SendTextMessageAsync(
                     userData.UserPreferences[(int) UserPreferencesSheetCells.ChatId].ToString()!,
-                    SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NotificationText, DefaultUserNotificationText)
+                    Translator.Translate("NotificationText",
+                        SpreadSheetUtils.TryGetCell(userData.UserPreferences, UserPreferencesSheetCells.Language))
                 );
             }
         }

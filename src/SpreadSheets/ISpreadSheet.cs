@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace StatusUpdateBot.SpreadSheets
 {
-    public interface ISpreadSheet
+    public interface ISpreadSheet: ICloneable
     {
         IList<IList<object>> GetAllRows(string sheet, bool ignoreCache = false);
 
