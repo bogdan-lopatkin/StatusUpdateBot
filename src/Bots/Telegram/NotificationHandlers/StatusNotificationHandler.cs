@@ -31,7 +31,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
                            + " "
                            + SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NotifyAt);
 
-            if (!NotificationUtils.IsDateObsolete(updateAt))
+            if (!NotificationUtils.IsDateObsolete(updateAt, DateCellFormats.DateTime.GetStringValue()))
                 return;
 
             _spreadSheet.LoadCache(
@@ -69,11 +69,13 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 
         private bool IsStatusShouldBeUpdated(IList<object> userStatus)
         {
-            return !NotificationUtils.IsDateValid(
-                userStatus[(int) UserStatusSheetCells.LastStatusUpdate].ToString(),
-                out var parsedDate,
-                DateCellFormats.Date.ToString()
-            ) || parsedDate.AddDays(_notificationInterval) < DateTime.Now;
+            return (userStatus.Count <= (int) UserStatusSheetCells.LastStatusUpdate) 
+                   || !NotificationUtils.IsDateValid(
+                        userStatus[(int) UserStatusSheetCells.LastStatusUpdate].ToString(),
+                        out var parsedDate,
+                        DateCellFormats.DateTime.GetStringValue()
+                    ) 
+                   || parsedDate.AddDays(_notificationInterval) < DateTime.Now;
         }
 
         private Dictionary<int, IList<UserData>> GroupUserStatusesByUserNotificationPreference(

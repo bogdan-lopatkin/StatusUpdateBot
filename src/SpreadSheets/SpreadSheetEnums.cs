@@ -38,10 +38,10 @@ namespace StatusUpdateBot.SpreadSheets
 
     public enum DateCellFormats
     {
-        [StringValue("dd/M/yyyy")]
+        [StringValue("dd/MM/yyyy")]
         Date,
         
-        [StringValue("dd/M/yyyy HH:mm")]
+        [StringValue("dd/MM/yyyy HH:mm")]
         DateTime
     }
     

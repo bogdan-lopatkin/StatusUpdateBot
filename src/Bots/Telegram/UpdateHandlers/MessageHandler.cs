@@ -110,7 +110,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
         private void ExpandStatusDataWithNewStatus(IDictionary<int, string> userStatusData, string text)
         {
             userStatusData[(int) UserStatusSheetCells.LastStatusUpdate] =
-                DateTime.Now.ToString(DateTime.Now.ToString(DateCellFormats.DateTime.GetStringValue()));
+                DateTime.Now.ToString(DateCellFormats.DateTime.GetStringValue());
             userStatusData[(int) UserStatusSheetCells.Comment] = text;
 
             if (Program.Translator != null)
