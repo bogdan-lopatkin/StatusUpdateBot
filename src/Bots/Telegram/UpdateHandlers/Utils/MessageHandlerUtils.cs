@@ -8,7 +8,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers.Utils
     {
         public static Dictionary<int, string> StatusMessageToArray(string message)
         {
-            var result = Regex.Split(message, @"(\d+[\.\)\]\s]*)").Where(s => s.Length > 0).ToArray();
+            var result = Regex.Split(message, @"(\d+[\.\ ]+)+").Where(s => s.Length > 0).ToArray();
 
             Dictionary<int, string> values = new();
             for (var i = 1; i < result.Length; i += 2)

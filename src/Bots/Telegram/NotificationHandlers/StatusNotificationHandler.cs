@@ -27,11 +27,17 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
             _spreadSheet.LoadCache(new[] {Sheets.Settings.GetStringValue()});
             _spreadSheet.EnableBatchUpdate();
 
-            var updateAt = SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NextNotificationAt)
-                           + " "
-                           + SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NotifyAt);
+            Double.TryParse(
+                SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NextNotificationAt),
+                out var nextNotificationOaDate
+            );
+            
+            Double.TryParse(
+                SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NotifyAt),
+                out var nextNotificationOaTime
+            );
 
-            if (!NotificationUtils.IsDateObsolete(updateAt, DateCellFormats.DateTime.GetStringValue()))
+            if (!NotificationUtils.IsDateObsolete(nextNotificationOaDate + nextNotificationOaTime, DateCellFormats.OaDate.ToString()))
                 return;
 
             _spreadSheet.LoadCache(
@@ -69,13 +75,11 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 
         private bool IsStatusShouldBeUpdated(IList<object> userStatus)
         {
-            return (userStatus.Count <= (int) UserStatusSheetCells.LastStatusUpdate) 
-                   || !NotificationUtils.IsDateValid(
-                        userStatus[(int) UserStatusSheetCells.LastStatusUpdate].ToString(),
-                        out var parsedDate,
-                        DateCellFormats.DateTime.GetStringValue()
-                    ) 
-                   || parsedDate.AddDays(_notificationInterval) < DateTime.Now;
+            return !NotificationUtils.IsDateValid(
+                SpreadSheetUtils.TryGetCell(userStatus, UserStatusSheetCells.LastStatusUpdate),
+                out var parsedDate,
+                DateCellFormats.OaDate.ToString()
+            ) || parsedDate.AddDays(_notificationInterval) < DateTime.Now;
         }
 
         private Dictionary<int, IList<UserData>> GroupUserStatusesByUserNotificationPreference(

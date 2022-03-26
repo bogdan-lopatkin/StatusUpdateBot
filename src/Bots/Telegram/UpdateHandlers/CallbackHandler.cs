@@ -80,7 +80,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 Sheets.Preferences.GetStringValue(),
                 update.CallbackQuery.From.Id.ToString(),
                 (int) UserPreferencesSheetCells.Id,
-                new Dictionary<int, string>
+                new Dictionary<int, object>
                 {
                     {(int) UserPreferencesSheetCells.NotificationMode, type}
                 }
@@ -106,7 +106,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 Sheets.Preferences.GetStringValue(),
                 update.CallbackQuery.From.Id.ToString(),
                 (int) UserPreferencesSheetCells.Id,
-                new Dictionary<int, string>
+                new Dictionary<int, object>
                 {
                     {(int) UserPreferencesSheetCells.Language, language}
                 }

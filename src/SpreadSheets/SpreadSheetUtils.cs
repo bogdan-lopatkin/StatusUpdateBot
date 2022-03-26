@@ -10,7 +10,7 @@ namespace StatusUpdateBot.SpreadSheets
         {
             var (rowId, row) = spreadSheet.FindRow(Sheets.Settings.GetStringValue(), setting.GetStringValue());
 
-            if (rowId == -1 || row.Count + 1 < (int) SettingsSheetCells.Value)
+            if (rowId == -1 || row.Count <= (int) SettingsSheetCells.Value)
                 return defaultValue;
 
             return row[(int) SettingsSheetCells.Value].ToString();
@@ -22,7 +22,7 @@ namespace StatusUpdateBot.SpreadSheets
                 Sheets.Settings.GetStringValue(),
                 setting.GetStringValue(),
                 (int) SettingsSheetCells.Id,
-                new Dictionary<int, string>
+                new Dictionary<int, object>
                 {
                     {(int) SettingsSheetCells.Value, value}
                 }

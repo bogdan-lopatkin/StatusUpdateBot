@@ -9,9 +9,9 @@ namespace StatusUpdateBot.SpreadSheets
 
         (int id, IList<object>) FindRow(string sheet, string searchFor, int searchIn = 0);
 
-        bool FindAndUpdateRow(string sheet, string searchFor, int searchIn, Dictionary<int, string> cells);
+        bool FindAndUpdateRow(string sheet, string searchFor, int searchIn, Dictionary<int, object> cells);
 
-        bool UpdateOrCreateRow(string sheet, string searchFor, int searchIn, Dictionary<int, string> cells);
+        bool UpdateOrCreateRow(string sheet, string searchFor, int searchIn, Dictionary<int, object> cells);
 
         void LoadCache(string[] sheets);
 

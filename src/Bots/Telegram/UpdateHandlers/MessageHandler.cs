@@ -96,21 +96,20 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 AcknowledgeStatusUpdate(update.Message.Chat, update.Message.From, updateSuccessful);
         }
 
-        private Dictionary<int, string> CreateStatusDataFromUser(User user)
+        private Dictionary<int, object> CreateStatusDataFromUser(User user)
         {
-            return new Dictionary<int, string>
+            return new Dictionary<int, object>
             {
                 {(int) UserStatusSheetCells.Id, user.Id.ToString()},
                 {(int) UserStatusSheetCells.Username, user.Username},
                 {(int) UserStatusSheetCells.Name, Transliteration.CyrillicToLatin(user.FirstName + " " + user.LastName)},
-                {(int) UserStatusSheetCells.LastActivity, DateTime.Now.ToString(DateCellFormats.DateTime.GetStringValue())}
+                {(int) UserStatusSheetCells.LastActivity, DateTime.Now.ToOADate()}
             };
         }
 
-        private void ExpandStatusDataWithNewStatus(IDictionary<int, string> userStatusData, string text)
+        private void ExpandStatusDataWithNewStatus(IDictionary<int, object> userStatusData, string text)
         {
-            userStatusData[(int) UserStatusSheetCells.LastStatusUpdate] =
-                DateTime.Now.ToString(DateCellFormats.DateTime.GetStringValue());
+            userStatusData[(int) UserStatusSheetCells.LastStatusUpdate] = DateTime.Now.ToOADate();
             userStatusData[(int) UserStatusSheetCells.Comment] = text;
 
             if (Program.Translator != null)
@@ -121,7 +120,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 userStatusData[fixedUserStatusCellsCount + entry.Key] = entry.Value;
         }
 
-        private void UpdateUserStatus(Dictionary<int, string> userStatusData, User user)
+        private void UpdateUserStatus(Dictionary<int, object> userStatusData, User user)
         {
             _spreadSheet.UpdateOrCreateRow(
                 Sheets.Status.GetStringValue(),
@@ -146,7 +145,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 Sheets.Preferences.GetStringValue(),
                 user.Id.ToString(),
                 (int) UserPreferencesSheetCells.Id,
-                new Dictionary<int, string>
+                new Dictionary<int, object>
                 {
                     {(int) UserPreferencesSheetCells.Id, user.Id.ToString()},
                     {targetCell, chat.Id.ToString()}
@@ -167,7 +166,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
         {
             var userHasPreferredNotificationMode = IsUserHasPreferredNotificationMode(user);
             
-            if (!int.TryParse(SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NextNotificationAt),
+            if (!int.TryParse(SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NotifyAfter),
                     out var interval))
                 interval = 3;
 
@@ -198,7 +197,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             var arr = messageText.Split(Environment.NewLine)
                 .Select(s =>
                 {
-                    var userReference = user.Username ?? $"{user.FirstName} {user.LastName}";
+                    var userReference = user.Username != null ? $"@{user.Username}" : $"{user.FirstName} {user.LastName}";
 
                     return s.Contains(userReference) ? userReference + (isUpdateSuccessful ? " ✅" : " ❌") : s;
                 })

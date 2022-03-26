@@ -56,7 +56,7 @@ namespace StatusUpdateBot.SpreadSheets.Google
             BatchUpdateValuesRequest requestBody = new()
             {
                 Data = _pendingUpdates,
-                ValueInputOption = "RAW"
+                ValueInputOption = "USER_ENTERED"
             };
 
             _service.Spreadsheets.Values.BatchUpdate(requestBody, _spreadSheetId).Execute();
@@ -69,7 +69,12 @@ namespace StatusUpdateBot.SpreadSheets.Google
             if (ignoreCache == false && _cache.ContainsKey(sheet))
                 return _cache[sheet];
 
-            var response = _service.Spreadsheets.Values.Get(_spreadSheetId, sheet).Execute();
+            var request = _service.Spreadsheets.Values.Get(_spreadSheetId, sheet);
+            request.ValueRenderOption =
+                SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.UNFORMATTEDVALUE;
+            request.DateTimeRenderOption =
+                SpreadsheetsResource.ValuesResource.GetRequest.DateTimeRenderOptionEnum.SERIALNUMBER;
+            var response = request.Execute();
             var values = response.Values;
 
             return values;
@@ -92,8 +97,8 @@ namespace StatusUpdateBot.SpreadSheets.Google
 
             return (-1, null);
         }
-
-        public bool FindAndUpdateRow(string sheet, string searchFor, int searchIn, Dictionary<int, string> cells)
+        
+        public bool FindAndUpdateRow(string sheet, string searchFor, int searchIn, Dictionary<int, object> cells)
         {
             var (rowId, row) = FindRow(sheet, searchFor, searchIn);
 
@@ -106,7 +111,7 @@ namespace StatusUpdateBot.SpreadSheets.Google
             return true;
         }
 
-        public bool UpdateOrCreateRow(string sheet, string searchFor, int searchIn, Dictionary<int, string> cells)
+        public bool UpdateOrCreateRow(string sheet, string searchFor, int searchIn, Dictionary<int, object> cells)
         {
             var (rowId, row) = FindRow(sheet, searchFor, searchIn);
 
@@ -125,6 +130,11 @@ namespace StatusUpdateBot.SpreadSheets.Google
             List<string> ranges = new(sheets);
 
             var request = _service.Spreadsheets.Values.BatchGet(_spreadSheetId);
+            
+            request.ValueRenderOption =
+                SpreadsheetsResource.ValuesResource.BatchGetRequest.ValueRenderOptionEnum.UNFORMATTEDVALUE;
+            request.DateTimeRenderOption =
+                SpreadsheetsResource.ValuesResource.BatchGetRequest.DateTimeRenderOptionEnum.SERIALNUMBER;
             request.Ranges = ranges;
 
             var valueRanges = request.Execute().ValueRanges;
@@ -181,14 +191,14 @@ namespace StatusUpdateBot.SpreadSheets.Google
                 new FileDataStore(configurationPath, true)).Result;
         }
 
-        private void UpdateRowCell(IList<object> row, int cellToUpdate, string newCellData)
+        private void UpdateRowCell(IList<object> row, int cellToUpdate, object newCellData)
         {
             while (cellToUpdate > row.Count - 1) row.Add("");
 
             row[cellToUpdate] = newCellData;
         }
 
-        private IList<object> UpdateRowCells(IList<object> row, Dictionary<int, string> cells)
+        private IList<object> UpdateRowCells(IList<object> row, Dictionary<int, object> cells)
         {
             foreach (var (key, value) in cells) UpdateRowCell(row, key, value);
 
