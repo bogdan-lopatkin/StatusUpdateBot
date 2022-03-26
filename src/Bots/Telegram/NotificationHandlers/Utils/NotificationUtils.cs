@@ -7,7 +7,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers.Utils
 {
     public static class NotificationUtils
     {
-        public static bool IsDateValid(object date, out DateTime parsedDate, string dateFormat = "dd/M/yyyy HH:mm")
+        public static bool IsDateValid(object date, out DateTime parsedDate, string dateFormat = "dd/MM/yyyy HH:mm")
         {
             if (date == null)
             {
@@ -35,7 +35,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers.Utils
             return true;
         }
 
-        public static bool IsDateObsolete(object date, string dateFormat = "dd/M/yyyy HH:mm")
+        public static bool IsDateObsolete(object date, string dateFormat = "dd/MM/yyyy HH:mm")
         {
             return !IsDateValid(date, out var parsedDate, dateFormat) || parsedDate <= DateTime.Now;
         }
