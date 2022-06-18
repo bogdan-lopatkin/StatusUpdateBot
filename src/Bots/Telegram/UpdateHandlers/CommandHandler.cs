@@ -94,11 +94,11 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             if (buttonRow.Count != 0)
                 keyboardButtons.Add(buttonRow.ToArray());
 
-            _botClient.SendTextMessageAsync(
+            ActionHandler.Do(() => _botClient.SendTextMessageAsync(
                 chat.Id,
                 text,
                 replyMarkup: new InlineKeyboardMarkup(keyboardButtons)
-            );
+            ));
         }
 
         private void EnrollAdmin(Update update)
@@ -115,11 +115,14 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                 .Add("@enrolledFor", Regex.Match(update.Message.Text, @"\d+").Value)
                 .ToString();
 
-            var e =_botClient.SendTextMessageAsync(
-                update.Message.Chat.Id,
-                message,
-                ParseMode.Html
-            ).Result;
+            ActionHandler.Do(() =>
+            {
+                var e = _botClient.SendTextMessageAsync(
+                    update.Message.Chat.Id,
+                    message,
+                    ParseMode.Html
+                ).Result;
+            });
         }
     }
 }

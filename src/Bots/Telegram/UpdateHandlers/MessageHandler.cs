@@ -170,13 +170,13 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
                     out var interval))
                 interval = 3;
 
-            _botClient.SendTextMessageAsync(chat.Id,
+            ActionHandler.Do(() => _botClient.SendTextMessageAsync(chat.Id,
                 isUpdateSuccessful
                     ? new StringFormatter(Translate("StatusUpdateSuccess"))
-                        .Add("@date",DateTime.Now.AddDays(interval).ToString(DateCellFormats.Date.GetStringValue()))
+                        .Add("@date", DateTime.Now.AddDays(interval).ToString(DateCellFormats.Date.GetStringValue()))
                         .ToString()
                     : Translate("StatusUpdateError")
-            );
+            ));
 
             if (!userHasPreferredNotificationMode)
                 UpdateHandlerUtils.SendNotificationsPreferenceInlineKeyboardMessage(

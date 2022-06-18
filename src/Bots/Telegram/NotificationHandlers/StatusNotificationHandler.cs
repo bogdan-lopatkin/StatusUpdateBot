@@ -5,6 +5,7 @@ using EnumStringValues;
 using StatusUpdateBot.Bots.Telegram.NotificationHandlers.Utils;
 using StatusUpdateBot.SpreadSheets;
 using StatusUpdateBot.Translators;
+using StatusUpdateBot.Utils;
 using Telegram.Bot;
 
 namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
@@ -54,7 +55,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
             var usersWithOverdueStatus = GetAllUsersWithOverdueStatus();
             var groupedByPreferenceUsers = GroupUserStatusesByUserNotificationPreference(usersWithOverdueStatus);
 
-            NotifyUsersInGroup(groupedByPreferenceUsers[(int) NotificationPreferences.Group]);
+            ActionHandler.Do(() => NotifyUsersInGroup(groupedByPreferenceUsers[(int) NotificationPreferences.Group]));
             NotifyUsersInPrivateChat(groupedByPreferenceUsers[(int) NotificationPreferences.Private]);
 
             SpreadSheetUtils.SetSetting(
@@ -63,7 +64,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
                 DateTime.Now.AddDays(_notificationInterval).ToString(DateCellFormats.Date.GetStringValue())
             );
 
-            _spreadSheet.ExecuteBatchUpdate();
+            ActionHandler.Do(() => _spreadSheet.ExecuteBatchUpdate());
         }
 
         private IList<IList<object>> GetAllUsersWithOverdueStatus()
@@ -158,11 +159,11 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
                 if (userData.UserPreferences[(int) UserPreferencesSheetCells.ChatId].ToString() == "")
                     continue;
 
-                _botClient.SendTextMessageAsync(
+                ActionHandler.Do(() => _botClient.SendTextMessageAsync(
                     userData.UserPreferences[(int) UserPreferencesSheetCells.ChatId].ToString()!,
                     Translator.Translate("NotificationText",
                         SpreadSheetUtils.TryGetCell(userData.UserPreferences, UserPreferencesSheetCells.Language))
-                );
+                ));
             }
         }
 
