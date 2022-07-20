@@ -56,13 +56,17 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
             }
 
             var isNewStatusProvided = update.Message.Text != null && update.Message.Text.Contains("#status");
+            var cachedSpreadSheet = _spreadSheet as ICachedSpreadSheet;
 
-            _spreadSheet.EnableBatchUpdate();
-            _spreadSheet.LoadCache(new[]
-                {
-                    Sheets.Settings.GetStringValue(),
-                }
-            );
+            if (cachedSpreadSheet != null)
+            {
+                cachedSpreadSheet.EnableBatchUpdate();
+                cachedSpreadSheet.LoadCache(new[]
+                    {
+                        Sheets.Settings.GetStringValue(),
+                    }
+                );
+            }
 
             bool updateSuccessful;
             try
@@ -85,7 +89,7 @@ namespace StatusUpdateBot.Bots.Telegram.UpdateHandlers
 
             try
             {
-                _spreadSheet.ExecuteBatchUpdate();
+                cachedSpreadSheet?.ExecuteBatchUpdate();
             }
             catch (Exception e)
             {

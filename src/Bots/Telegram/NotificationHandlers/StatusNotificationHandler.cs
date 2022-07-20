@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using EnumStringValues;
 using StatusUpdateBot.Bots.Telegram.NotificationHandlers.Utils;
@@ -25,8 +26,10 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
 
         public void SendNotifications()
         {
-            _spreadSheet.LoadCache(new[] {Sheets.Settings.GetStringValue()});
-            _spreadSheet.EnableBatchUpdate();
+            var cachedSpreadSheet = _spreadSheet as ICachedSpreadSheet;
+            
+            cachedSpreadSheet?.LoadCache(new[] { Sheets.Settings.GetStringValue() });
+            cachedSpreadSheet?.EnableBatchUpdate();
 
             Double.TryParse(
                 SpreadSheetUtils.GetSetting(_spreadSheet, Settings.NextNotificationAt),
@@ -41,7 +44,7 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
             if (!NotificationUtils.IsDateObsolete(nextNotificationOaDate + nextNotificationOaTime, DateCellFormats.OaDate.ToString()))
                 return;
 
-            _spreadSheet.LoadCache(
+            cachedSpreadSheet?.LoadCache(
                 new[]
                 {
                     Sheets.Status.GetStringValue(),
@@ -61,10 +64,10 @@ namespace StatusUpdateBot.Bots.Telegram.NotificationHandlers
             SpreadSheetUtils.SetSetting(
                 _spreadSheet,
                 Settings.NextNotificationAt,
-                DateTime.Now.AddDays(_notificationInterval).ToString(DateCellFormats.Date.GetStringValue())
+                DateTime.Now.AddDays(_notificationInterval).ToOADate().ToString(CultureInfo.InvariantCulture)
             );
 
-            ActionHandler.Do(() => _spreadSheet.ExecuteBatchUpdate());
+            ActionHandler.Do(() => cachedSpreadSheet?.ExecuteBatchUpdate());
         }
 
         private IList<IList<object>> GetAllUsersWithOverdueStatus()

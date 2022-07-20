@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using EnumStringValues;
 
 namespace StatusUpdateBot.SpreadSheets
@@ -56,6 +57,47 @@ namespace StatusUpdateBot.SpreadSheets
         public static string TryGetCell(IList<object> row, Enum cell, string fallback = null)
         {
             return IsRowHasCell(row, cell, out var value) ? value : fallback;
+        }
+
+        public static void SyncSheets(ISpreadSheet originSpreadSheet, ISpreadSheet targetSpreadSheet, string[] sheetsToSync = null)
+        {
+            sheetsToSync ??= Enum.GetValues(typeof(Sheets))
+                .Cast<Sheets>()
+                .Select(v => v.ToString())
+                .ToArray();
+            
+            var cachedOriginSpreadSheet = originSpreadSheet as ICachedSpreadSheet;
+            var cachedTargetSpreadSheet = targetSpreadSheet as ICachedSpreadSheet;
+            cachedOriginSpreadSheet?.LoadCache(sheetsToSync);
+            cachedTargetSpreadSheet?.LoadCache(sheetsToSync);
+            cachedTargetSpreadSheet?.EnableBatchUpdate();
+
+            foreach (var sheet in sheetsToSync)
+            {
+                var rows = cachedOriginSpreadSheet?.GetAllRows(sheet, false) ?? originSpreadSheet.GetAllRows(sheet);
+
+                foreach (var row in rows)
+                {
+                    if (row.Count == 0)
+                        continue;
+                    
+                    var rowById = new Dictionary<int, object>();
+
+                    for (int i = 0; i < row.Count; i++)
+                    {
+                        var rowValue = row[i];
+
+                        if (Double.TryParse(rowValue.ToString(), out var parsedRowValue))
+                            rowValue = parsedRowValue;
+                        
+                        rowById.Add(i, rowValue);
+                    }
+
+                    targetSpreadSheet.UpdateOrCreateRow(sheet, row[0].ToString(), (int) UserStatusSheetCells.Id, rowById);
+                }
+            }
+            
+            cachedTargetSpreadSheet?.ExecuteBatchUpdate();
         }
     }
 }

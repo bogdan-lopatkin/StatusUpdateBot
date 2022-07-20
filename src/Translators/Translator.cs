@@ -41,7 +41,9 @@ namespace StatusUpdateBot.Translators
 
         public static void LoadValuesFromSpreadSheet(ISpreadSheet spreadSheet, Enum fromSheet = null, bool hotReload = true)
         {
-            var translationRows = spreadSheet.GetAllRows(Sheets.Translations.GetStringValue(), true);
+            var translationRows = spreadSheet is ICachedSpreadSheet cachedSpreadSheet
+                ? cachedSpreadSheet.GetAllRows(Sheets.Translations.GetStringValue(), true)
+                : spreadSheet.GetAllRows(Sheets.Translations.GetStringValue());
 
             if (translationRows == null || translationRows.Count == 0)
                 return;

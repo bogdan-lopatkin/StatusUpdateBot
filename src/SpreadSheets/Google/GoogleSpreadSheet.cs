@@ -9,7 +9,7 @@ using Google.Apis.Util.Store;
 
 namespace StatusUpdateBot.SpreadSheets.Google
 {
-    public class GoogleSpreadSheets : ISpreadSheet
+    public class GoogleSpreadSheets : ICachedSpreadSheet
     {
         private readonly Dictionary<string, IList<IList<object>>> _cache = new();
         private readonly List<ValueRange> _pendingUpdates = new();
@@ -64,11 +64,16 @@ namespace StatusUpdateBot.SpreadSheets.Google
             _isBatchUpdatesEnabled = false;
         }
 
-        public IList<IList<object>> GetAllRows(string sheet, bool ignoreCache = false)
+        public IList<IList<object>> GetAllRows(string sheet, bool ignoreCache)
         {
             if (ignoreCache == false && _cache.ContainsKey(sheet))
                 return _cache[sheet];
 
+            return GetAllRows(sheet);
+        }
+        
+        public IList<IList<object>> GetAllRows(string sheet)
+        {
             var request = _service.Spreadsheets.Values.Get(_spreadSheetId, sheet);
             request.ValueRenderOption =
                 SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.UNFORMATTEDVALUE;
@@ -82,7 +87,7 @@ namespace StatusUpdateBot.SpreadSheets.Google
 
         public (int id, IList<object>) FindRow(string sheet, string searchFor, int searchIn = 0)
         {
-            var values = GetAllRows(sheet);
+            var values = GetAllRows(sheet, false);
 
             if (values is not {Count: > 0}) return (-1, null);
 
