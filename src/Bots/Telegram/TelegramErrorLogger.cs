@@ -28,7 +28,7 @@ namespace StatusUpdateBot.Bots.Telegram
                     $"Ошибка - {e.Message} {Environment.NewLine}{Environment.NewLine} {e.StackTrace}"
                 );
 
-                Console.WriteLine("Error occured and was reported");
+                Console.WriteLine($"{DateTime.Now} - Error occured and was reported");
             }
             catch (Exception)
             {

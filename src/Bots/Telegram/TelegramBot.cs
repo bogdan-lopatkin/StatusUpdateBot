@@ -81,7 +81,7 @@ namespace StatusUpdateBot.Bots.Telegram
                 _ => exception.ToString()
             };
 
-            Console.WriteLine(errorMessage);
+            Console.WriteLine(DateTime.Now + " - " + errorMessage);
 
             return Task.CompletedTask;
         }

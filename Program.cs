@@ -32,7 +32,7 @@ namespace StatusUpdateBot
             );
             
             var remoteSpreadSheet = new GoogleSpreadSheets(Configuration.GetSection("SpreadSheet:Google:SpreadSheetId").Value);
-            var spreadSheet = new ExcelSpreadSheet(sourceSheet: remoteSpreadSheet);
+            var spreadSheet = new JsonToSpreadSheetAdapter(sourceSheet: remoteSpreadSheet);
 
             Translators.Translator.LoadValuesFromSpreadSheet(spreadSheet);
             Translators.Translator.SetDefaultTargetLanguage(SpreadSheetUtils.GetSetting(spreadSheet, Settings.LanguageInGroup));
@@ -56,7 +56,7 @@ namespace StatusUpdateBot
         private static void StartSyncingSheets(ISpreadSheet localSpreadSheet, ISpreadSheet remoteSpreadSheet)
         {
             var startTimeSpan = TimeSpan.Zero;
-            var periodTimeSpan = TimeSpan.FromMinutes(30);
+            var periodTimeSpan = TimeSpan.FromMinutes(5);
 
             _timer = new Timer(_ =>
             {

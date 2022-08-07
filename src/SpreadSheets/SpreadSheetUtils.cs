@@ -76,6 +76,9 @@ namespace StatusUpdateBot.SpreadSheets
             {
                 var rows = cachedOriginSpreadSheet?.GetAllRows(sheet, false) ?? originSpreadSheet.GetAllRows(sheet);
 
+                if (rows == null)
+                    continue;
+                
                 foreach (var row in rows)
                 {
                     if (row.Count == 0)
