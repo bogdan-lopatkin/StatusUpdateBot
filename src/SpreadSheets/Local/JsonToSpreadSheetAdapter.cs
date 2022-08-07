@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Newtonsoft.Json.Linq;
-using Spire.Xls;
 using StatusUpdateBot.DataSources.Json;
 
 namespace StatusUpdateBot.SpreadSheets.Local
@@ -17,7 +14,7 @@ namespace StatusUpdateBot.SpreadSheets.Local
             return MemberwiseClone();
         }
 
-        public JsonToSpreadSheetAdapter(string filePath = @"statuses202.json", ISpreadSheet sourceSheet = null)
+        public JsonToSpreadSheetAdapter(string filePath = @"statuses.json", ISpreadSheet sourceSheet = null)
         {
             _json = new Json(filePath);
 
@@ -119,7 +116,7 @@ namespace StatusUpdateBot.SpreadSheets.Local
              while (cellToUpdate > row.Count - 1) 
                  row.Add("");
 
-             row[cellToUpdate] = newCellData;
+             row[cellToUpdate] = newCellData ?? "";
          }
     }
 }

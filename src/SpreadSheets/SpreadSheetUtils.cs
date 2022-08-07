@@ -88,7 +88,7 @@ namespace StatusUpdateBot.SpreadSheets
 
                     for (int i = 0; i < row.Count; i++)
                     {
-                        var rowValue = row[i];
+                        var rowValue = row[i] ?? "";
 
                         if (Double.TryParse(rowValue.ToString(), out var parsedRowValue))
                             rowValue = parsedRowValue;

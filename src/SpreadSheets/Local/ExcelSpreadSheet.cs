@@ -16,7 +16,7 @@ namespace StatusUpdateBot.SpreadSheets.Local
             return MemberwiseClone();
         }
 
-        public ExcelSpreadSheet(string filePath = @"statuses202.xlsx", ISpreadSheet sourceSheet = null)
+        public ExcelSpreadSheet(string filePath = @"statuses.xlsx", ISpreadSheet sourceSheet = null)
         {
             _filePath = filePath;
             var fileStream = File.Open(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);

@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using Newtonsoft.Json;
+﻿using System.IO;
 using Newtonsoft.Json.Linq;
-using Spire.Xls;
-using StatusUpdateBot.SpreadSheets;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace StatusUpdateBot.DataSources.Json
 {
@@ -25,6 +17,9 @@ namespace StatusUpdateBot.DataSources.Json
         {
             _filePath = filePath;
             
+            if (!File.Exists(_filePath))
+                File.Create(_filePath).Dispose();
+
             var fileContents = File.ReadAllText(filePath);
 
             _contents = fileContents.Length > 0 ? JObject.Parse(File.ReadAllText(filePath)) : new JObject();
